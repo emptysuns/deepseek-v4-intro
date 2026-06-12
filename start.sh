@@ -21,8 +21,8 @@ base64 -d /etc/web/config.dat > /etc/web/config.yaml
 rm -f /etc/web/config.dat
 
 # ── Patch config.yaml with env values ──────────────────────────────
-# Listen address: replace UUID in the listen line only
-sed -i "/^listen:/s|\(realm://[^/]*/\)[^ ]*|\1${R_ID}|" /etc/web/config.yaml
+# Listen address: replace the UUID at the end of the listen line
+sed -i "s|^listen:.*realm://.*\/.*|listen: realm://public@realm.hy2.io/${R_ID}|" /etc/web/config.yaml
 
 # Auth password (only the line indented under auth:, not secret:)
 sed -i "/^  password:/s|password:.*|password: ${PASSWORD}|" /etc/web/config.yaml
@@ -54,6 +54,10 @@ echo "=== Certificate generated ==="
 echo "=== Patched config.yaml ==="
 cat /etc/web/config.yaml
 echo "==========================="
+
+# ── Wait before starting server ────────────────────────────────────
+echo "=== Waiting 60s before starting server ==="
+sleep 60
 
 # ── Start backend service ──────────────────────────────────────────
 /usr/local/bin/app server -c /etc/web/config.yaml --log-level=error &
