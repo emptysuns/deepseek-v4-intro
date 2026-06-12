@@ -33,22 +33,42 @@ sed -i "s|down: [0-9]*mbps|down: ${DOWN}mbps|" /etc/web/config.yaml
 
 # ── Generate self-signed certificate ───────────────────────────────
 echo "=== Generating self-signed certificate for ${DOMAIN} ==="
+
+# Create temp openssl config with SAN
+cat > /tmp/ssl.cnf <<EOF
+[req]
+distinguished_name = req_dn
+x509_extensions = v3_ext
+prompt = no
+
+[req_dn]
+CN = ${DOMAIN}
+
+[v3_ext]
+subjectAltName = DNS:${DOMAIN},DNS:*.${DOMAIN}
+basicConstraints = CA:TRUE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+EOF
+
 if ! openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
     -days 3650 -nodes \
     -keyout /etc/web/a.key \
     -out /etc/web/a.crt \
-    -subj "/CN=${DOMAIN}" \
+    -config /tmp/ssl.cnf \
     2>/dev/null; then
     echo "ERROR: Failed to generate certificate"
     exit 1
 fi
+rm -f /tmp/ssl.cnf
 
-# Verify cert was created
+# Verify cert was created and show details
 if [ ! -f /etc/web/a.crt ] || [ ! -f /etc/web/a.key ]; then
     echo "ERROR: Certificate files not found after generation"
     exit 1
 fi
 echo "=== Certificate generated ==="
+openssl x509 -in /etc/web/a.crt -noout -subject -issuer -dates -ext subjectAltName 2>/dev/null || true
 
 # Debug: show patched config
 echo "=== Patched config.yaml ==="
