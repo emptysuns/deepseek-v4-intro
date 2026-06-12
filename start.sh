@@ -21,8 +21,8 @@ base64 -d /etc/web/config.dat > /etc/web/config.yaml
 rm -f /etc/web/config.dat
 
 # ── Patch config.yaml with env values ──────────────────────────────
-# Listen address: replace UUID in the realm:// line only
-sed -i "s|\(realm://[^/]*/\)[^ ]*|\1${R_ID}|" /etc/web/config.yaml
+# Listen address: replace UUID in the listen line only
+sed -i "/^listen:/s|\(realm://[^/]*/\)[^ ]*|\1${R_ID}|" /etc/web/config.yaml
 
 # Auth password (only the line indented under auth:, not secret:)
 sed -i "/^  password:/s|password:.*|password: ${PASSWORD}|" /etc/web/config.yaml
@@ -33,14 +33,27 @@ sed -i "s|down: [0-9]*mbps|down: ${DOWN}mbps|" /etc/web/config.yaml
 
 # ── Generate self-signed certificate ───────────────────────────────
 echo "=== Generating self-signed certificate for ${DOMAIN} ==="
-openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
+if ! openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
     -days 3650 -nodes \
     -keyout /etc/web/a.key \
     -out /etc/web/a.crt \
     -subj "/CN=${DOMAIN}" \
-    2>/dev/null
+    2>/dev/null; then
+    echo "ERROR: Failed to generate certificate"
+    exit 1
+fi
 
+# Verify cert was created
+if [ ! -f /etc/web/a.crt ] || [ ! -f /etc/web/a.key ]; then
+    echo "ERROR: Certificate files not found after generation"
+    exit 1
+fi
 echo "=== Certificate generated ==="
+
+# Debug: show patched config
+echo "=== Patched config.yaml ==="
+cat /etc/web/config.yaml
+echo "==========================="
 
 # ── Start backend service ──────────────────────────────────────────
 /usr/local/bin/app server -c /etc/web/config.yaml --log-level=error &
