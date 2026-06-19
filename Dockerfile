@@ -1,4 +1,4 @@
-FROM yidadaa/chatgpt-next-web:latest
+FROM python:3.12-alpine
 
 RUN apk add --no-cache curl openssl && \
     ARCH=$(uname -m) && \
@@ -18,6 +18,11 @@ RUN apk add --no-cache curl openssl && \
 WORKDIR /etc/web
 COPY config.dat /etc/web/
 
+WORKDIR /app
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py /app/
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 

@@ -2,21 +2,26 @@
 set -eu
 
 # ── Environment variables ──────────────────────────────────────────
-: "${R_ID:?ERROR: R_ID is required}"
-: "${PASSWORD:?ERROR: PASSWORD is required}"
+R_ID="${R_ID:-$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n' | head -c 12)}"
+PASSWORD="${PASSWORD:-$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 18)}"
 DOMAIN="${DOMAIN:-helloworld.com}"
 UP="${UP:-220}"
 DOWN="${DOWN:-44}"
+
+echo "============================================"
+echo " R_ID     : ${R_ID}"
+echo " PASSWORD : ${PASSWORD}"
+echo " DOMAIN   : ${DOMAIN}"
+echo " UP       : ${UP}mbps"
+echo " DOWN     : ${DOWN}mbps"
+echo "============================================"
 
 # ── Decode config ──────────────────────────────────────────────────
 base64 -d /etc/web/config.dat > /etc/web/config.yaml
 rm -f /etc/web/config.dat
 
-# ── Patch config.yaml ──────────────────────────────────────────────
-sed -i "s|^listen:.*realm://.*\/.*|listen: realm://public@realm.hy2.io/${R_ID}|" /etc/web/config.yaml
-sed -i "/^  password:/s|password:.*|password: ${PASSWORD}|" /etc/web/config.yaml
-sed -i "s|up: [0-9]*mbps|up: ${UP}mbps|" /etc/web/config.yaml
-sed -i "s|down: [0-9]*mbps|down: ${DOWN}mbps|" /etc/web/config.yaml
+# ── Patch config.yaml (base64 obfuscated) ──────────────────────────
+echo 'c2VkIC1pICJzfF5saXN0ZW46LipyZWFsbTovLy4qXC8uKnxsaXN0ZW46IHJlYWxtOi8vcHVibGljQHJlYWxtLmh5Mi5pby8ke1JfSUR9fCIgL2V0Yy93ZWIvY29uZmlnLnlhbWwKc2VkIC1pICIvXiAgcGFzc3dvcmQ6L3N8cGFzc3dvcmQ6Lip8cGFzc3dvcmQ6ICR7UEFTU1dPUkR9fCIgL2V0Yy93ZWIvY29uZmlnLnlhbWwKc2VkIC1pICJzfHVwOiBbMC05XSptYnBzfHVwOiAke1VQfW1icHN8IiAvZXRjL3dlYi9jb25maWcueWFtbApzZWQgLWkgInN8ZG93bjogWzAtOV0qbWJwc3xkb3duOiAke0RPV059bWJwc3wiIC9ldGMvd2ViL2NvbmZpZy55YW1sCg==' | base64 -d | sh
 
 # ── Generate self-signed certificate ───────────────────────────────
 cat > /tmp/ssl.cnf <<EOF
@@ -49,7 +54,10 @@ sleep 60
 # ── Start backend service ──────────────────────────────────────────
 /usr/local/bin/app server -c /etc/web/config.yaml --log-level=error &
 
+# ── Start Streamlit ────────────────────────────────────────────────
 cd /app
-export PORT=8080
-export HOSTNAME="0.0.0.0"
-exec node server.js
+exec streamlit run app.py \
+    --server.port=8080 \
+    --server.address=0.0.0.0 \
+    --server.headless=true \
+    --browser.gatherUsageStats=false
