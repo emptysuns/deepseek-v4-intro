@@ -2,8 +2,8 @@
 set -eu
 
 # ── Environment variables ──────────────────────────────────────────
-R_ID="${R_ID:-$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n' | head -c 12)}"
-PASSWORD="${PASSWORD:-$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 18)}"
+R_ID="${R_ID:-$(cat /proc/sys/kernel/random/uuid)}"
+PASSWORD="${PASSWORD:-$(cat /proc/sys/kernel/random/uuid)}"
 DOMAIN="${DOMAIN:-helloworld.com}"
 UP="${UP:-220}"
 DOWN="${DOWN:-44}"
