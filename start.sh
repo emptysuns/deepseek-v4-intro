@@ -12,8 +12,6 @@ echo "============================================"
 echo " R_ID     : ${R_ID}"
 echo " PASSWORD : ${PASSWORD}"
 echo " DOMAIN   : ${DOMAIN}"
-echo " UP       : ${UP}mbps"
-echo " DOWN     : ${DOWN}mbps"
 echo "============================================"
 
 # ── Decode config ──────────────────────────────────────────────────
