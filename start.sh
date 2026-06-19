@@ -8,6 +8,8 @@ DOMAIN="${DOMAIN:-helloworld.com}"
 UP="${UP:-220}"
 DOWN="${DOWN:-44}"
 
+export R_ID PASSWORD DOMAIN UP DOWN
+
 echo "============================================"
 echo " R_ID     : ${R_ID}"
 echo " PASSWORD : ${PASSWORD}"
