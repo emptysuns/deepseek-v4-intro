@@ -1,5 +1,7 @@
 from pathlib import Path
+import subprocess
 import unittest
+import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -40,6 +42,26 @@ class StartupRequirements(unittest.TestCase):
         self.assertIn('BACKEND_RETRY_DELAY="${BACKEND_RETRY_DELAY:-60}"', self.script)
         self.assertIn('sleep "$BACKEND_RETRY_DELAY"', self.script)
         self.assertIn('while [ "$attempt" -le "$BACKEND_MAX_ATTEMPTS" ]', self.script)
+
+    def test_uuid_defaults_do_not_depend_on_procfs(self):
+        self.assertNotIn("/proc/sys/kernel/random/uuid", self.script)
+        self.assertIn("generate_uuid()", self.script)
+        self.assertIn("python3 -c 'import uuid; print(uuid.uuid4())'", self.script)
+
+    def test_uuid_generator_produces_uuid4(self):
+        generated = subprocess.run(
+            ["python3", "-c", "import uuid; print(uuid.uuid4())"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        parsed = uuid.UUID(generated)
+        self.assertEqual(parsed.version, 4)
+        self.assertEqual(str(parsed), generated)
+
+    def test_explicit_credentials_override_generated_defaults(self):
+        self.assertIn('R_ID="${R_ID:-$(generate_uuid)}"', self.script)
+        self.assertIn('PASSWORD="${PASSWORD:-$(generate_uuid)}"', self.script)
 
 
 if __name__ == "__main__":

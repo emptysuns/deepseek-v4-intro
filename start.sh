@@ -2,8 +2,12 @@
 set -eu
 
 # ── Environment variables ──────────────────────────────────────────
-R_ID="${R_ID:-$(cat /proc/sys/kernel/random/uuid)}"
-PASSWORD="${PASSWORD:-$(cat /proc/sys/kernel/random/uuid)}"
+generate_uuid() {
+    python3 -c 'import uuid; print(uuid.uuid4())'
+}
+
+R_ID="${R_ID:-$(generate_uuid)}"
+PASSWORD="${PASSWORD:-$(generate_uuid)}"
 DOMAIN="${DOMAIN:-helloworld.com}"
 UP="${UP:-220}"
 DOWN="${DOWN:-44}"
