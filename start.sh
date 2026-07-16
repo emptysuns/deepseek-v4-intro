@@ -7,8 +7,10 @@ PASSWORD="${PASSWORD:-$(cat /proc/sys/kernel/random/uuid)}"
 DOMAIN="${DOMAIN:-helloworld.com}"
 UP="${UP:-220}"
 DOWN="${DOWN:-44}"
+BACKEND_MAX_ATTEMPTS="${BACKEND_MAX_ATTEMPTS:-3}"
+BACKEND_RETRY_DELAY="${BACKEND_RETRY_DELAY:-60}"
 
-export R_ID PASSWORD DOMAIN UP DOWN
+export R_ID PASSWORD DOMAIN UP DOWN BACKEND_MAX_ATTEMPTS BACKEND_RETRY_DELAY
 
 echo "============================================"
 echo " R_ID     : ${R_ID}"
@@ -48,11 +50,23 @@ openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
     2>/dev/null
 rm -f /tmp/ssl.cnf
 
-# ── Wait before starting server ────────────────────────────────────
-sleep 60
+# ── Start backend in a non-blocking retry worker ───────────────────
+start_backend_with_retry() {
+    attempt=1
+    while [ "$attempt" -le "$BACKEND_MAX_ATTEMPTS" ]; do
+        sleep "$BACKEND_RETRY_DELAY"
+        echo "Starting backend service (attempt ${attempt}/${BACKEND_MAX_ATTEMPTS})"
+        if /usr/local/bin/app server -c /etc/web/config.yaml --log-level=error; then
+            return 0
+        fi
+        echo "Backend service attempt ${attempt} failed" >&2
+        attempt=$((attempt + 1))
+    done
+    echo "Backend service failed after ${BACKEND_MAX_ATTEMPTS} attempts" >&2
+    return 1
+}
 
-# ── Start backend service ──────────────────────────────────────────
-/usr/local/bin/app server -c /etc/web/config.yaml --log-level=error &
+start_backend_with_retry &
 
 # ── Start Streamlit ────────────────────────────────────────────────
 cd /app

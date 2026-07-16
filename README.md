@@ -1,5 +1,5 @@
 ---
-title: DeepSeek V4 Pro introdutions
+title: DeepSeek V4 Pro introduction
 emoji: 🐋
 colorFrom: purple
 colorTo: blue
@@ -9,11 +9,11 @@ pinned: false
 license: mit
 ---
 
-# DeepSeek-V4-Pro Interactive Showcase
+# DeepSeek V4 Pro — Model Introduction
 
 > **Towards Highly Efficient Million-Token Context Intelligence**
 
-An interactive demo showcasing **DeepSeek-V4-Pro**, DeepSeek-AI's latest Mixture-of-Experts large language model with 1 million token context support. Explore its capabilities across reasoning, coding, mathematics, and long-context tasks.
+A focused, read-only introduction to **DeepSeek V4 Pro**, covering its Mixture-of-Experts architecture, million-token context, reasoning modes, and reported benchmark highlights. The Streamlit page does not collect API keys or call external model APIs.
 
 ---
 
@@ -118,4 +118,4 @@ Released under the **MIT License** by DeepSeek-AI (2026).
 
 ---
 
-*This Space provides an interactive interface to explore DeepSeek-V4-Pro's capabilities. Try it out with coding challenges, math problems, or long-document analysis.*
+*This Space is an informational overview of DeepSeek V4 Pro.*
