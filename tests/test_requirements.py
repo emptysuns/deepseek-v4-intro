@@ -60,17 +60,8 @@ class StartupRequirements(unittest.TestCase):
         self.assertEqual(str(parsed), generated)
 
     def test_explicit_credentials_override_generated_defaults(self):
-        self.assertIn('if [ -n "${R_ID:-}" ]; then', self.script)
-        self.assertIn('R_ID="$(generate_uuid)"', self.script)
+        self.assertIn('R_ID="${R_ID:-$(generate_uuid)}"', self.script)
         self.assertIn('PASSWORD="${PASSWORD:-$(generate_uuid)}"', self.script)
-        self.assertIn('R_ID_LOCKED=1', self.script)
-
-    def test_mimic_support_hooks(self):
-        self.assertIn('modprobe mimic', self.script)
-        self.assertIn('Rotated R_ID', self.script)
-        df = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-        self.assertIn("bookworm_mimic_", df)
-        self.assertIn("/usr/local/bin/mimic", df)
 
 
 if __name__ == "__main__":
